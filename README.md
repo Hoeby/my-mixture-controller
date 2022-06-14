@@ -1,9 +1,9 @@
 # mixture-controller
 RC engine mixture controller.
 
-[](https://github.com/raleighcopter/my-mixture-controller/blob/main/photos/controller.jpg)
+![](https://github.com/raleighcopter/my-mixture-controller/blob/main/photos/controller.jpg)
 
-This controller works with a stihl solenoid part number 0000 120 5111 and a custom solenoid housing (https://github.com/raleighcopter/mixture-controller/blob/main/photos/solenoid%20housing.pdf) to modulate gasoline flow to a conventional methanol carburator. This allows us to generate a custom fuel mixture curve on our transmitter that is slaved to the throttle channel output. The result is that we can vary the fuel:air mixture across the entire throttle range to make the engine run near stoichiometric fuel:air ratio at idle, full throttle, and every point in between. Without the solenoid and controller, our methanol engines run extremely rich in the middle. 
+This controller works with a stihl solenoid part number 0000 120 5111 and a custom solenoid housing ([https://github.com/raleighcopter/my-mixture-controller/blob/main/photos/solenoid%20housing.pdf](https://github.com/raleighcopter/my-mixture-controller/blob/main/photos/controller.jpg)) to modulate gasoline flow to a conventional methanol carburator. This allows us to generate a custom fuel mixture curve on our transmitter that is slaved to the throttle channel output. The result is that we can vary the fuel:air mixture across the entire throttle range to make the engine run near stoichiometric fuel:air ratio at idle, full throttle, and every point in between. Without the solenoid and controller, our methanol engines run extremely rich in the middle. 
 
 The controller takes an RC channel and maps a 1000 uS - 2000 uS channel pulse to a PWM solenoid pulse. Additionally, the controller measures atmospheric pressure and temperature and adjusts the fuel amount to maintain the ideal mixture regardless of the weather or altitude (which constantly changes as we fly our models). We have engines that were tuned at 85 degrees F that run just as well at 35 degrees F without touching the needles. 
 

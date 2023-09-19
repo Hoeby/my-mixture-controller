@@ -1,6 +1,3 @@
-this code is experimental and under deevelopment. comment out this line in order to build this code.
-//s.bus data comes into the xiao on pin 7 and requires an inverter in order to work.
-
 //this code is written for the seeeduino xiao by david taylor and released under the 
 //GNU general public license V3.0. Permissions of this strong copyleft license are 
 //conditioned on making available complete source code of licensed works and modifications,
@@ -173,6 +170,7 @@ while(bmp_error == 1) {
     /* Grab the received data */
     data = sbus_rx.data();
     channel_pulse = constrain (data.ch[(mixture_channel - 1)], 172, 1811);
+    channel = constrain (1000 + ((channel_pulse - 172) / 1.6), 1000, 2000);
     usable_pulse = map(channel_pulse, 172, 1811, 0, 6145);
 }
 
@@ -191,7 +189,7 @@ while(bmp_error == 1) {
       
     adjusted_pulse = (usable_pulse * ((reference_temp/(temp + 273))*(pressure/reference_pressure))); 
     solenoid_pulse = constrain(adjusted_pulse, 0, 6145);
-    solenoid_pulse = map(solenoid_pulse, 0, 6145, 6145, 0);
+//    solenoid_pulse = map(solenoid_pulse, 0, 6145, 6145, 0);
 
 // load pulse value into timer register
     REG_TCC1_CC1 = (solenoid_pulse); 
@@ -285,23 +283,6 @@ while(bmp_error == 1) {
   update_display=0;
 }
 }
-
-
-// this function reads the rc channel pulse time
-//void RCpinread() {
-//  pulse_now = micros();
-//  pulse_old = channel_pulse;
-//  channel_pulse = pulse_now - pulse_start_time;
-//  pulse_start_time = pulse_now;
-//  if(channel_pulse < 988) {
-//    channel_pulse = pulse_old; //throw out low values
-//  }else if(channel_pulse > 2012) {
-//    channel_pulse = pulse_old; //throw out high values
-//  }
-//  channel_pulse = constrain (channel_pulse, 1000, 2000);
-//  channel = channel_pulse;
-//  usable_pulse = channel_pulse - 1000;
-//}
 
 sportData getSensorData(CustomSPortSensor* intake_temperature) {
   sportData data; 

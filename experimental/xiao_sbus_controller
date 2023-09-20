@@ -7,8 +7,7 @@
 
 //pin d3 controls the solenoid
 
-
-//pin d7 is the sbus channel. 
+//pin d7 is the sbus channel. set the channel below
 const int mixture_channel = 14;
 
 //adjust reference temp (kelvin), pressure (paschal), and rc channel pin here
@@ -16,7 +15,7 @@ const int reference_temp = 273;
 const int reference_pressure = 100000;
 const int fallback_temp = 273;
 const int fallback_pressure = 102000;
-//  const int rc_functionPin = 2;
+const int RPM_Pin = 2;
 
 //OLED addresses are 0x3C or 0x3D
 #define OLED_ADDR   0x3C
@@ -33,17 +32,15 @@ int update_display;
 const long display_interval = 1000; 
 volatile unsigned long pulse_start_time = 0L;
 volatile unsigned long pulse_now = 0L;
-volatile unsigned long channel_pulse = 0L;
+int channel_pulse = 0;
 volatile unsigned long pulse_old = 0L;
 volatile unsigned long adjusted_pulse = 0L;
-volatile unsigned long fallback_corr = 0L;
-volatile unsigned long solenoid_pulse = 0L;
-volatile unsigned long usable_pulse = 0L;
-int channel;
+int solenoid_pulse = 0L;
+int usable_pulse = 0L;
 int bmp_error = 0;
 char _buffer[9];
 
-#include "sbus.h"
+#include <sbus.h>              //bolder flight systems PWM library by brian taylor
 #include <SPort.h> 
 #include <Wire.h>
 #include <Adafruit_GFX.h>      // include Adafruit graphics library
@@ -87,7 +84,7 @@ void setup() {
 //uncomment the next line to debug  
 //SerialUSB.begin(115200);
 
-//  pinMode(rc_functionPin, INPUT);
+//  pinMode(RPM_Pin, INPUT);
 
   if (!bmp.begin(BMP280_ADDR, BMP280_CHIPID)) {
 //  SerialUSB.println(F("Could not find a valid BMP280 sensor, check wiring or try a different address!"));
@@ -153,6 +150,7 @@ void loop() {
 //Handle new s.port data
 hub.handle(); 
 
+//check for sensor error
 while(bmp_error == 1) {
   display.clearDisplay();
   display.setCursor(0, 0);
@@ -166,18 +164,13 @@ while(bmp_error == 1) {
   delay(500);  
 }
 
+//get new channel data
   if (sbus_rx.Read()) {
     /* Grab the received data */
     data = sbus_rx.data();
-    channel_pulse = constrain (data.ch[(mixture_channel - 1)], 172, 1811);
-    channel = constrain (1000 + ((channel_pulse - 172) / 1.6), 1000, 2000);
-    usable_pulse = map(channel_pulse, 172, 1811, 0, 6145);
+    channel_pulse = map (data.ch[(mixture_channel - 1)], 172, 1811, 988, 2012);
+    usable_pulse = map(constrain (channel_pulse, 1000, 2000), 1000, 2000, 0, 6145);
 }
-
-
-
-
-
 
 // get temperature and pressure from library
   float temp     = bmp.readTemperature();   // get temperature
@@ -189,7 +182,7 @@ while(bmp_error == 1) {
       
     adjusted_pulse = (usable_pulse * ((reference_temp/(temp + 273))*(pressure/reference_pressure))); 
     solenoid_pulse = constrain(adjusted_pulse, 0, 6145);
-//    solenoid_pulse = map(solenoid_pulse, 0, 6145, 6145, 0);
+    solenoid_pulse = map(solenoid_pulse, 0, 6145, 6145, 0);
 
 // load pulse value into timer register
     REG_TCC1_CC1 = (solenoid_pulse); 
@@ -263,7 +256,7 @@ while(bmp_error == 1) {
 
 //print channel pulse
 
-  sprintf(_buffer, "%04u Channel Pulse", (int)(channel));
+  sprintf(_buffer, "%04u Channel Pulse", (int)(channel_pulse));
   display.setCursor(0,16);
   display.setTextSize(1);
   display.print(_buffer);  
@@ -283,6 +276,7 @@ while(bmp_error == 1) {
   update_display=0;
 }
 }
+
 
 sportData getSensorData(CustomSPortSensor* intake_temperature) {
   sportData data; 

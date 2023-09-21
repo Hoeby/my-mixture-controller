@@ -183,17 +183,17 @@ while(bmp_error == 1) {
 
 //process the AUX1 channel and do something with the Aux1 pin
 
-if (data.ch[Aux1_channel] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrite(Aux1_Pin,0);
+if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrite(Aux1_Pin,0);
 
 
 //process the AUX2 channel and do something with the Aux2 pin
 
-if (data.ch[Aux2_channel] > 900) digitalWrite(Aux2_Pin, 1); else digitalWrite(Aux2_Pin,0);
+if (data.ch[(Aux2_channel-1)] > 900) digitalWrite(Aux2_Pin, 1); else digitalWrite(Aux2_Pin,0);
 
 
 //process the AUX3 channel and do something with the Aux3 pin
 
-if (data.ch[Aux3_channel] > 900) digitalWrite(Aux3_Pin, 1); else digitalWrite(Aux3_Pin,0);
+if (data.ch[(Aux3_channel-1)] > 900) digitalWrite(Aux3_Pin, 1); else digitalWrite(Aux3_Pin,0);
 
 
 // get temperature and pressure from library

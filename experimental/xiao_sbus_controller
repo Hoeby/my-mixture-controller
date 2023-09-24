@@ -18,10 +18,11 @@ const int mixture_channel = 13;
 const int Aux1_channel = 14;
 const int Aux2_channel = 15;
 const int Aux3_channel = 16;
-const int Aux1_Pin = 8;
-const int Aux2_Pin = 9;
-const int Aux3_Pin = 10;
-const int RPM_Pin = 2;
+const int Aux1_Pin = 10;
+const int Temp1_Pin = 8;
+const int Temp2_Pin = 9;
+const int RPM_Pin = D2;
+
 
 //OLED addresses are 0x3C or 0x3D
 #define OLED_ADDR   0x3C
@@ -45,6 +46,8 @@ int solenoid_pulse = 0L;
 int usable_pulse = 0L;
 int bmp_error = 0;
 char _buffer[9];
+int RPM;
+int Aux_command;
 
 #include <sbus.h>              //bolder flight systems PWM library by brian taylor
 #include <SPort.h> 
@@ -52,6 +55,23 @@ char _buffer[9];
 #include <Adafruit_GFX.h>      // include Adafruit graphics library
 #include <Adafruit_SSD1306.h>  // include Adafruit SSD1306 OLED display driver
 #include <Adafruit_BMP280.h>   // include Adafruit BMP280 sensor library
+#include <thermistor.h>        //thermistor by panstamp (modified by commenting lines 82-84 in thermistor.cpp)
+      
+
+
+
+//Create the thermistors
+THERMISTOR thermistor1(A8,                     // Analog pin
+                      100000,                 // Nominal resistance at 25 ºC
+                      4390,                   // thermistor's beta coefficient
+                      1000);                  // Value of the series resistor
+
+THERMISTOR thermistor2(A9,                     // Analog pin
+                      100000,                 // Nominal resistance at 25 ºC
+                      4390,                   // thermistor's beta coefficient
+                      1000);                  // Value of the series resistor
+
+
 
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial1);
@@ -66,6 +86,13 @@ CustomSPortSensor intake_temperature(getSensorData);  //Sensor with a callback f
 CustomSPortSensor intake_pressure(getSensorData1);  //Sensor with a callback function to get the data
 CustomSPortSensor compensation_ratio(getSensorData2);  //Sensor with a callback function to get the data
 CustomSPortSensor solenoid_command(getSensorData3);  //Sensor with a callback function to get the data
+CustomSPortSensor Temp1(getSensorData4);  //Sensor with a callback function to get the data
+CustomSPortSensor Temp2(getSensorData5);  //Sensor with a callback function to get the data
+CustomSPortSensor RPM1(getSensorData6);  //Sensor with a callback function to get the data
+CustomSPortSensor Aux1_command(getSensorData7);  //Sensor with a callback function to get the data
+
+
+
 
 void setup() {
 
@@ -73,8 +100,11 @@ void setup() {
   hub.registerSensor(intake_pressure);             //Add sensor to the hub
   hub.registerSensor(compensation_ratio);          //Add sensor to the hub
   hub.registerSensor(solenoid_command);            //Add sensor to the hub
-
-
+  hub.registerSensor(Temp1);                       //Add sensor to the hub
+  hub.registerSensor(Temp2);                       //Add sensor to the hub
+  hub.registerSensor(RPM1);                         //Add sensor to the hub
+  hub.registerSensor(Aux1_command);                //Add sensor to the hub
+ 
   hub.begin();                            //Start listening for s.port data
 
 // Begin the SBUS communication */
@@ -91,9 +121,8 @@ void setup() {
 //SerialUSB.begin(115200);
 
 pinMode(RPM_Pin, INPUT);
-pinMode (Aux1_Pin, OUTPUT);
-pinMode (Aux2_Pin, OUTPUT);
-pinMode (Aux3_Pin, OUTPUT);
+pinMode(Aux1_Pin, OUTPUT);
+
 
   if (!bmp.begin(BMP280_ADDR, BMP280_CHIPID)) {
 //  SerialUSB.println(F("Could not find a valid BMP280 sensor, check wiring or try a different address!"));
@@ -110,7 +139,7 @@ pinMode (Aux3_Pin, OUTPUT);
   if (bmp.readTemperature() >= 85) bmp_error = 1;
   if (bmp.readPressure() >= 110000) bmp_error = 1;
 
-//setup timer regisiters
+//setup timer registers
   pinMode(3, OUTPUT);
   REG_GCLK_GENDIV = GCLK_GENDIV_DIV(232) |       // (232) Divide the main clock down by some factor to get generic clock
                     GCLK_GENDIV_ID(4);            // Select Generic Clock (GCLK) 4
@@ -181,19 +210,25 @@ while(bmp_error == 1) {
     usable_pulse = map(constrain (channel_pulse, 1000, 2000), 1000, 2000, 0, 6145);
 }
 
-//process the AUX1 channel and do something with the Aux1 pin
+//Read engine RPM and store it in RPM variable
+
+
+
+
+
+
+
+
+
+//process the AUX1 channel and determine the Aux1 pin command
 
 if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrite(Aux1_Pin,0);
 
 
-//process the AUX2 channel and do something with the Aux2 pin
-
-if (data.ch[(Aux2_channel-1)] > 900) digitalWrite(Aux2_Pin, 1); else digitalWrite(Aux2_Pin,0);
 
 
-//process the AUX3 channel and do something with the Aux3 pin
 
-if (data.ch[(Aux3_channel-1)] > 900) digitalWrite(Aux3_Pin, 1); else digitalWrite(Aux3_Pin,0);
+
 
 
 // get temperature and pressure from library
@@ -326,6 +361,34 @@ sportData getSensorData2(CustomSPortSensor* compensation_ratio) {
 sportData getSensorData3(CustomSPortSensor* solenoid_command) {
   sportData data; 
   data.applicationId = 0x5903;            //Set the sensor id for the current data poll. Set to 0 to discard the data, skip to the next sensor
-  data.value =  solenoid_pulse;                      //Set the sensor value 
+  data.value =  solenoid_pulse;           //Set the sensor value 
+  return data;
+}
+
+sportData getSensorData4(CustomSPortSensor* Temp1) {
+  sportData data; 
+  data.applicationId = 0x5904;            //Set the sensor id for the current data poll. Set to 0 to discard the data, skip to the next sensor
+  data.value =  thermistor1.read();    //Set the sensor value 
+  return data;
+}
+
+sportData getSensorData5(CustomSPortSensor* Temp2) {
+  sportData data; 
+  data.applicationId = 0x5905;            //Set the sensor id for the current data poll. Set to 0 to discard the data, skip to the next sensor
+  data.value =  thermistor2.read();     //Set the sensor value 
+  return data;
+}
+
+sportData getSensorData6(CustomSPortSensor* RPM1) {
+  sportData data; 
+  data.applicationId = 0x5906;            //Set the sensor id for the current data poll. Set to 0 to discard the data, skip to the next sensor
+  data.value =  RPM;                      //Set the sensor value 
+  return data;
+}
+
+sportData getSensorData7(CustomSPortSensor* Aux1_command) {
+  sportData data; 
+  data.applicationId = 0x5907;            //Set the sensor id for the current data poll. Set to 0 to discard the data, skip to the next sensor
+  data.value =  Aux_command;             //Set the sensor value 
   return data;
 }

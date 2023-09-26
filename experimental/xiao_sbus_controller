@@ -1,3 +1,7 @@
+This code is experimental and currently under development. comment this line to compile
+
+//to do: acceleration pump, deceleration pump, air pump control
+
 //this code is written for the seeeduino xiao by david taylor and released under the 
 //GNU general public license V3.0. Permissions of this strong copyleft license are 
 //conditioned on making available complete source code of licensed works and modifications,
@@ -22,7 +26,7 @@ const int Aux1_Pin = 10;
 const int Temp1_Pin = 8;
 const int Temp2_Pin = 9;
 const int RPM_Pin = D2;
-
+const int RPM_average = 4;  // average this many revolutions
 
 //OLED addresses are 0x3C or 0x3D
 #define OLED_ADDR   0x3C
@@ -48,6 +52,13 @@ int bmp_error = 0;
 char _buffer[9];
 int RPM;
 int Aux_command;
+int RPM_old = 0;
+int RPM_new = 0;
+int RPM_time;
+int RPM_oldtime;
+
+
+
 
 #include <sbus.h>              //bolder flight systems PWM library by brian taylor
 #include <SPort.h> 
@@ -81,6 +92,8 @@ bfs::SbusData data;
 Adafruit_BMP280 bmp; // I2C
 Adafruit_SSD1306 display(-1);  // initialize Adafruit display library, share reset with xiao reset
 
+
+//do telemetry stuff
 SPortHub hub(0x12, 0);                    //Hardware ID 0x12, Software serial pin 0
 CustomSPortSensor intake_temperature(getSensorData);  //Sensor with a callback function to get the data
 CustomSPortSensor intake_pressure(getSensorData1);  //Sensor with a callback function to get the data
@@ -92,9 +105,8 @@ CustomSPortSensor RPM1(getSensorData6);  //Sensor with a callback function to ge
 CustomSPortSensor Aux1_command(getSensorData7);  //Sensor with a callback function to get the data
 
 
-
-
 void setup() {
+//setup telemetry devices
 
   hub.registerSensor(intake_temperature);          //Add sensor to the hub
   hub.registerSensor(intake_pressure);             //Add sensor to the hub
@@ -102,10 +114,10 @@ void setup() {
   hub.registerSensor(solenoid_command);            //Add sensor to the hub
   hub.registerSensor(Temp1);                       //Add sensor to the hub
   hub.registerSensor(Temp2);                       //Add sensor to the hub
-  hub.registerSensor(RPM1);                         //Add sensor to the hub
+  hub.registerSensor(RPM1);                        //Add sensor to the hub
   hub.registerSensor(Aux1_command);                //Add sensor to the hub
  
-  hub.begin();                            //Start listening for s.port data
+  hub.begin();                                     //Start listening for s.port data
 
 // Begin the SBUS communication */
   sbus_rx.Begin();
@@ -120,9 +132,12 @@ void setup() {
 //uncomment the next line to debug  
 //SerialUSB.begin(115200);
 
+//setup RPM pin and interrupt
 pinMode(RPM_Pin, INPUT);
-pinMode(Aux1_Pin, OUTPUT);
+attachInterrupt(RPM_Pin, RPM_measure, RISING);
 
+//setup Aux1 pin
+pinMode(Aux1_Pin, OUTPUT);
 
   if (!bmp.begin(BMP280_ADDR, BMP280_CHIPID)) {
 //  SerialUSB.println(F("Could not find a valid BMP280 sensor, check wiring or try a different address!"));
@@ -212,8 +227,9 @@ while(bmp_error == 1) {
 
 //Read engine RPM and store it in RPM variable
 
-
-
+RPM_old = RPM_new;
+RPM_new = 60000000/(RPM_time - RPM_oldtime);
+RPM = (1/RPM_average)*RPM_new + ((RPM_average - 1)/RPM_average)*RPM_old;
 
 
 
@@ -336,6 +352,11 @@ if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrit
 }
 }
 
+
+void RPM_measure(){
+  RPM_oldtime = RPM_time;
+  RPM_time = micros();
+}
 
 sportData getSensorData(CustomSPortSensor* intake_temperature) {
   sportData data; 

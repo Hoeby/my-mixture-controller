@@ -225,13 +225,13 @@ while(bmp_error == 1) {
 }
 
 //Read engine RPM and store it in RPM variable
-
 if (New_rev = 1) {
   RPM_old = RPM_new;
   RPM_new = 60000000/(RPM_time - RPM_oldtime);
-  RPM = (1/RPM_average)*RPM_new + ((RPM_average - 1)/RPM_average)*RPM_old;
+  RPM = (RPM_new + ((RPM_average - 1)*RPM_old))/RPM_average;
   New_rev = 0;
 }
+
 //process the AUX1 channel and determine the Aux1 pin command
 
 if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrite(Aux1_Pin,0);

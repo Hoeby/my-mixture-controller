@@ -56,6 +56,8 @@ unsigned long RPM_old = 0;
 unsigned long RPM_new = 0;
 volatile unsigned long RPM_time;
 volatile unsigned long RPM_oldtime;
+int New_rev = 0;
+
 
 #include <sbus.h>              //bolder flight systems PWM library by brian taylor
 #include <SPort.h> 
@@ -224,10 +226,12 @@ while(bmp_error == 1) {
 
 //Read engine RPM and store it in RPM variable
 
-RPM_old = RPM_new;
-RPM_new = 60000000/(RPM_time - RPM_oldtime);
-RPM = (1/RPM_average)*RPM_new + ((RPM_average - 1)/RPM_average)*RPM_old;
-
+if (New_rev = 1) {
+  RPM_old = RPM_new;
+  RPM_new = 60000000/(RPM_time - RPM_oldtime);
+  RPM = (1/RPM_average)*RPM_new + ((RPM_average - 1)/RPM_average)*RPM_old;
+  New_rev = 0;
+}
 //process the AUX1 channel and determine the Aux1 pin command
 
 if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrite(Aux1_Pin,0);
@@ -348,6 +352,7 @@ if (data.ch[(Aux1_channel-1)] > 900) digitalWrite(Aux1_Pin, 1); else digitalWrit
 void RPM_measure(){
   RPM_oldtime = RPM_time;
   RPM_time = micros();
+  New_rev = 1;
 }
 
 sportData getSensorData(CustomSPortSensor* intake_temperature) {

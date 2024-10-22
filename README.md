@@ -30,4 +30,4 @@ you'll need to install a few libraries in the arduino IDE: adafruit bmp280, adaf
 
 build photos as well as parts lists and assembly instructions are on the wiki at https://github.com/raleighcopter/my-mixture-controller/wiki
 
-Contact me at d.a.taylor.pe@gmail.com
+for support, post in the thread at https://www.rcuniverse.com/forum/engine-conversions-92/11699946-electronic-solutions-modifying-glow-engines-all-sizes-gasoline.html

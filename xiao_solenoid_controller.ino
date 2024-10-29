@@ -98,7 +98,7 @@ void setup() {
 
 //setup timer regisiters
   pinMode(3, OUTPUT);
-  REG_GCLK_GENDIV = GCLK_GENDIV_DIV(1000) |       // Divide the main clock down by some factor to get generic clock
+  REG_GCLK_GENDIV = GCLK_GENDIV_DIV(232) |       // Divide the main clock down by some factor to get generic clock
                     GCLK_GENDIV_ID(4);            // Select Generic Clock (GCLK) 4
   while (GCLK->STATUS.bit.SYNCBUSY);              // Wait for synchronization
 
